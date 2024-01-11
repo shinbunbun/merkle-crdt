@@ -1,4 +1,4 @@
-use crate::cid::CID;
+use crate::cid::Cid;
 use serde::Serialize;
 
 pub type Payload = (String, i64);
@@ -7,13 +7,13 @@ pub type Payload = (String, i64);
 pub struct Node {
     pub cid: String,
     pub payload: Payload,
-    pub child_cids: Vec<CID>,
+    pub child_cids: Vec<Cid>,
 }
 
 #[derive(Serialize)]
 struct ForHashNode {
     pub payload: Payload,
-    pub child_cids: Vec<CID>,
+    pub child_cids: Vec<Cid>,
 }
 
 impl Node {

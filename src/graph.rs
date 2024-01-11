@@ -1,15 +1,15 @@
-use crate::cid::CID;
+use crate::cid::Cid;
 
 #[derive(Debug)]
 pub struct Graph {
-    nodes: Vec<CID>,
+    nodes: Vec<Cid>,
 }
 
 impl Graph {
     pub fn new() -> Graph {
         Graph { nodes: Vec::new() }
     }
-    pub fn add_node(&mut self, cid: CID) {
+    pub fn add_node(&mut self, cid: Cid) {
         self.nodes.push(cid);
     }
     pub fn get_nodes_len(&self) -> usize {

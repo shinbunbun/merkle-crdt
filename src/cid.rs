@@ -1,1 +1,1 @@
-pub type CID = String;
+pub type Cid = String;
