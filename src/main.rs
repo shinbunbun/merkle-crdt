@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    vec,
+};
 
 use crate::{graph::Graph, node::Node};
 
@@ -30,6 +33,8 @@ fn main() {
 
             // Graphが空でない場合
             if let Some(cid) = graph.pop_node() {
+                println!("cid: {:?}", cid);
+
                 // Nodeを作成
                 let node = Node::new(("add".to_string(), value), vec![cid]);
                 println!("node: {:?}", node);

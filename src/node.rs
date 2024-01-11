@@ -20,14 +20,14 @@ impl Node {
     pub fn new(payload: Payload, child_cids: Vec<Cid>) -> Node {
         let for_hash_node = ForHashNode {
             payload: payload.clone(),
-            child_cids,
+            child_cids: child_cids.clone(),
         };
         let json = serde_json::to_string(&for_hash_node).unwrap();
         let cid = sha256::digest(json.as_bytes());
         Node {
             cid,
             payload,
-            child_cids: Vec::new(),
+            child_cids,
         }
     }
 }
