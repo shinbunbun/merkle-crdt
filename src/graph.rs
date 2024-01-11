@@ -15,4 +15,10 @@ impl Graph {
     pub fn get_nodes_len(&self) -> usize {
         self.nodes.len()
     }
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+    pub fn pop_node(&mut self) -> Option<Cid> {
+        self.nodes.pop()
+    }
 }

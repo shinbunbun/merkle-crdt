@@ -17,10 +17,10 @@ struct ForHashNode {
 }
 
 impl Node {
-    pub fn new(payload: Payload) -> Node {
+    pub fn new(payload: Payload, child_cids: Vec<Cid>) -> Node {
         let for_hash_node = ForHashNode {
             payload: payload.clone(),
-            child_cids: Vec::new(),
+            child_cids,
         };
         let json = serde_json::to_string(&for_hash_node).unwrap();
         let cid = sha256::digest(json.as_bytes());

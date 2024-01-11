@@ -28,21 +28,42 @@ fn main() {
             std::io::stdin().read_line(&mut value).unwrap();
             let value = value.trim().parse::<i64>().unwrap();
 
-            // Nodeを作成
-            let node = Node::new(("add".to_string(), value));
-            println!("node: {:?}", node);
+            // Graphが空でない場合
+            if let Some(cid) = graph.pop_node() {
+                // Nodeを作成
+                let node = Node::new(("add".to_string(), value), vec![cid]);
+                println!("node: {:?}", node);
 
-            // GraphにNodeのCIDを追加
-            graph.add_node(node.cid.clone());
+                // GraphにNodeのCIDを追加
+                graph.add_node(node.cid.clone());
 
-            // HashMapにNodeを追加
-            // これをすることによりCIDからNodeを引くことができるようになる
-            map.insert(graph.get_nodes_len().try_into().unwrap(), node);
-            println!("graph: {:?}", graph);
+                // HashMapからNodeを削除
+                map.remove(&(graph.get_nodes_len() as u64 - 1));
 
-            // g-setにValueを追加
-            g_set.insert(value);
-            println!("g_set: {:?}", g_set);
+                // HashMapにNodeを追加
+                // これをすることによりCIDからNodeを引くことができるようになる
+                map.insert(graph.get_nodes_len().try_into().unwrap(), node);
+                println!("graph: {:?}", graph);
+
+                // g-setにValueを追加
+                g_set.insert(value);
+            } else {
+                // Nodeを作成
+                let node = Node::new(("add".to_string(), value), Vec::new());
+                println!("node: {:?}", node);
+
+                // GraphにNodeのCIDを追加
+                graph.add_node(node.cid.clone());
+
+                // HashMapにNodeを追加
+                // これをすることによりCIDからNodeを引くことができるようになる
+                map.insert(graph.get_nodes_len().try_into().unwrap(), node);
+                println!("graph: {:?}", graph);
+
+                // g-setにValueを追加
+                g_set.insert(value);
+                println!("g_set: {:?}", g_set);
+            }
         }
     }
 }
