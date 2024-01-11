@@ -64,6 +64,8 @@ fn main() {
                 g_set.insert(value);
                 println!("g_set: {:?}", g_set);
             }
+        } else if input == "lookup" {
+            println!("g-set: {:?}", g_set);
         }
     }
 }
