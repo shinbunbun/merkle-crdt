@@ -12,7 +12,7 @@ fn main() {
     let mut map = HashMap::<u64, Node>::new();
     let mut g_set = HashSet::<i64>::new();
 
-    println!("input operation(add, get_all)");
+    println!("input operation(add, lookup)");
 
     // 標準入力からの操作を受け付ける
     let mut input = String::new();
