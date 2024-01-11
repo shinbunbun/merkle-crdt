@@ -47,6 +47,7 @@ fn main() {
 
                 // g-setにValueを追加
                 g_set.insert(value);
+                println!("g_set: {:?}", g_set);
             } else {
                 // Nodeを作成
                 let node = Node::new(("add".to_string(), value), Vec::new());
