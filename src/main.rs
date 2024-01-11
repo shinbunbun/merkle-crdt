@@ -7,23 +7,39 @@ mod graph;
 mod node;
 
 fn main() {
+    // 必要なデータ構造の定義
     let mut graph = Graph::new();
     let mut map = HashMap::<u64, Node>::new();
-    let mut g_set = HashSet::<u64>::new();
+    let mut g_set = HashSet::<i64>::new();
 
     println!("input operation(add, get_all)");
+
+    // 標準入力からの操作を受け付ける
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
     let input = input.trim();
+
+    // 操作が"add"だった場合
     if input == "add" {
-        let mut payload = String::new();
+        // 標準入力からの値を受け付ける
+        let mut value = String::new();
         println!("input number");
-        std::io::stdin().read_line(&mut payload).unwrap();
-        let payload = payload.trim();
-        let node = Node::new(payload.to_string());
+        std::io::stdin().read_line(&mut value).unwrap();
+        let value = value.trim().parse::<i64>().unwrap();
+
+        // Nodeを作成
+        let node = Node::new(("add".to_string(), value));
         println!("node: {:?}", node);
+
+        // GraphにNodeのCIDを追加
         graph.add_node(node.cid.clone());
+
+        // HashMapにNodeを追加
+        // これをすることによりCIDからNodeを引くことができるようになる
         map.insert(graph.get_nodes_len().try_into().unwrap(), node);
         println!("graph: {:?}", graph);
+
+        // g-setにValueを追加
+        g_set.insert(value);
     }
 }

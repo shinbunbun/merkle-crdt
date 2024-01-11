@@ -1,21 +1,23 @@
 use crate::cid::CID;
 use serde::Serialize;
 
+pub type Payload = (String, i64);
+
 #[derive(Debug)]
 pub struct Node {
     pub cid: String,
-    pub payload: String,
+    pub payload: Payload,
     pub child_cids: Vec<CID>,
 }
 
 #[derive(Serialize)]
 struct ForHashNode {
-    pub payload: String,
+    pub payload: Payload,
     pub child_cids: Vec<CID>,
 }
 
 impl Node {
-    pub fn new(payload: String) -> Node {
+    pub fn new(payload: Payload) -> Node {
         let for_hash_node = ForHashNode {
             payload: payload.clone(),
             child_cids: Vec::new(),
