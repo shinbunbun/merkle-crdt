@@ -41,5 +41,6 @@ fn main() {
 
         // g-setにValueを追加
         g_set.insert(value);
+        println!("g_set: {:?}", g_set);
     }
 }
