@@ -12,10 +12,10 @@ impl Graph {
     pub fn add_node(&mut self, cid: Cid) {
         self.nodes.push(cid);
     }
-    pub fn get_nodes_len(&self) -> usize {
-        self.nodes.len()
-    }
     pub fn pop_node(&mut self) -> Option<Cid> {
         self.nodes.pop()
+    }
+    pub fn get_nodes(&self) -> &Vec<Cid> {
+        &self.nodes
     }
 }
