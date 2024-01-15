@@ -15,7 +15,6 @@ fn main() {
     // 必要なデータ構造の定義
     let mut graph = Graph::new();
     let mut map = HashMap::<Cid, Node>::new();
-    // let mut g_set = HashSet::<i64>::new();
 
     loop {
         println!("input operation(add, lookup)");
@@ -48,10 +47,6 @@ fn main() {
                 // これをすることによりCIDからNodeを引くことができるようになる
                 map.insert(node.cid.clone(), node);
                 println!("graph: {:?}", graph);
-
-                // g-setにValueを追加
-                // g_set.insert(value);
-                // println!("g_set: {:?}", g_set);
             } else {
                 // Nodeを作成
                 let node = Node::new(("add".to_string(), value), Vec::new());
@@ -64,10 +59,6 @@ fn main() {
                 // これをすることによりCIDからNodeを引くことができるようになる
                 map.insert(node.cid.clone(), node);
                 println!("graph: {:?}", graph);
-
-                // g-setにValueを追加
-                // g_set.insert(value);
-                // println!("g_set: {:?}", g_set);
             }
         } else if input == "lookup" {
             // println!("g-set: {:?}", g_set);
