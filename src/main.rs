@@ -74,6 +74,7 @@ fn main() {
     }
 }
 
+// 子ノードを辿ってsetを作成する関数
 fn search_child(child_cid: &Cid, map: &HashMap<Cid, Node>, set: &mut HashSet<i64>) {
     let child_node = map.get(child_cid).unwrap();
     let value = child_node.payload.1;
