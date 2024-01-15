@@ -61,7 +61,6 @@ fn main() {
                 println!("graph: {:?}", graph);
             }
         } else if input == "lookup" {
-            // println!("g-set: {:?}", g_set);
             // グラフを辿ってsetを作成
             let mut set = HashSet::<i64>::new();
             let root_cid = graph.get_nodes().last().unwrap();
