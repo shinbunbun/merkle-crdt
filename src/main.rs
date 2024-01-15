@@ -4,17 +4,18 @@ use std::{
 };
 
 use cid::Cid;
+use merkle_dag::MerkleDag;
 
-use crate::{graph::Graph, node::Node};
+use crate::node::Node;
 
 mod cid;
 mod graph;
+mod merkle_dag;
 mod node;
 
 fn main() {
     // 必要なデータ構造の定義
-    let mut graph = Graph::new();
-    let mut map = HashMap::<Cid, Node>::new();
+    let mut merkle_dag = MerkleDag::new();
 
     loop {
         println!("input operation(add, lookup)");
@@ -33,7 +34,7 @@ fn main() {
             let value = value.trim().parse::<i64>().unwrap();
 
             // Graphが空でない場合
-            if let Some(root_cid) = graph.pop_node() {
+            if let Some(root_cid) = merkle_dag.graph.pop_node() {
                 println!("root_cid: {:?}", root_cid);
 
                 // Nodeを作成
@@ -41,34 +42,34 @@ fn main() {
                 println!("node: {:?}", node);
 
                 // GraphにNodeのCIDを追加
-                graph.add_node(node.cid.clone());
+                merkle_dag.graph.add_node(node.cid.clone());
 
                 // HashMapにNodeを追加
                 // これをすることによりCIDからNodeを引くことができるようになる
-                map.insert(node.cid.clone(), node);
-                println!("graph: {:?}", graph);
+                merkle_dag.map.insert(node.cid.clone(), node);
+                println!("graph: {:?}", merkle_dag.graph);
             } else {
                 // Nodeを作成
                 let node = Node::new(("add".to_string(), value), Vec::new());
                 println!("node: {:?}", node);
 
                 // GraphにNodeのCIDを追加
-                graph.add_node(node.cid.clone());
+                merkle_dag.graph.add_node(node.cid.clone());
 
                 // HashMapにNodeを追加
                 // これをすることによりCIDからNodeを引くことができるようになる
-                map.insert(node.cid.clone(), node);
-                println!("graph: {:?}", graph);
+                merkle_dag.map.insert(node.cid.clone(), node);
+                println!("graph: {:?}", merkle_dag.graph);
             }
         } else if input == "lookup" {
             // グラフを辿ってsetを作成
             let mut set = HashSet::<i64>::new();
-            let root_cid = graph.get_nodes().last().unwrap();
+            let root_cid = merkle_dag.graph.get_nodes().last().unwrap();
             println!("root_cid: {:?}", root_cid);
-            let root_node = map.get(root_cid).unwrap();
+            let root_node = merkle_dag.map.get(root_cid).unwrap();
             let value = root_node.payload.1;
             set.insert(value);
-            search_child(root_cid, &map, &mut set);
+            search_child(root_cid, &merkle_dag.map, &mut set);
             println!("set: {:?}", set)
         }
     }
