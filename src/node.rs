@@ -3,7 +3,7 @@ use serde::Serialize;
 
 pub type Payload = (String, i64);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Node {
     pub cid: String,
     pub payload: Payload,
