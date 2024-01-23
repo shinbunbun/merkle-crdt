@@ -5,7 +5,7 @@ pub type Payload = (String, i64);
 
 #[derive(Debug, Clone)]
 pub struct Node {
-    pub cid: String,
+    pub cid: Cid,
     pub payload: Payload,
     pub child_cids: Vec<Cid>,
 }
