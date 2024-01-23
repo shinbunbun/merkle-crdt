@@ -16,6 +16,11 @@ impl MerkleDag {
         }
     }
 
+    pub fn add_node(&mut self, node: Node) {
+        self.graph.add_node(node.cid.clone());
+        self.map.insert(node.cid.clone(), node);
+    }
+
     pub fn search(&self) -> HashSet<i64> {
         let mut used = HashSet::new();
         let result = self.dfs(self.graph.get_nodes(), &mut used);
