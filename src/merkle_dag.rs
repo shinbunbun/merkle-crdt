@@ -1,10 +1,8 @@
-use std::{
-    collections::{HashMap, HashSet},
-    usize,
-};
+use std::collections::{HashMap, HashSet};
 
-use crate::{cid::Cid, graph::Graph, merkle_dag, node::Node};
+use crate::{cid::Cid, graph::Graph, node::Node};
 
+#[derive(Clone)]
 pub struct MerkleDag {
     pub graph: Graph,
     pub map: HashMap<Cid, Node>,
@@ -24,11 +22,11 @@ impl MerkleDag {
         result
     }
 
-    pub fn merge<'a>(&'a self, merkle_dag: &'a MerkleDag) -> &Self {
+    pub fn merge<'a>(&'a self, merkle_dag: &'a MerkleDag) -> Self {
         // rootが同じかの確認
         if self.graph.get_nodes() == merkle_dag.graph.get_nodes() {
             // 同じならマージしない
-            return self;
+            return self.clone();
         }
         /* // rootが異なる場合
         // merkle_dagのnodeにselfのrootが含まれる場合、merkle_dagを返す
@@ -47,7 +45,7 @@ impl MerkleDag {
         // rootが異なる場合
         // selfとmerkle_dagのノードの重複を探してマージする
 
-        // selfのNodeとmerkle_dagのNodeのidと値を全てとってくる
+        /*  // selfのNodeとmerkle_dagのNodeのidと値を全てとってくる
         let self_cid_val_set = self
             .map
             .iter()
@@ -71,7 +69,7 @@ impl MerkleDag {
             }
         }
         if cnt == merkle_dag_cid_val_set_len {
-            return merkle_dag;
+            return merkle_dag.clone();
         }
 
         // merkle_dagがselfの部分木になっている場合
@@ -86,26 +84,34 @@ impl MerkleDag {
             }
         }
         if cnt == self_cid_val_set_len {
-            return self;
-        }
-
-        /* for self_node in self_cid_val_set {
-            for merkle_dag_node in merkle_dag_cid_val_set {
-                if self_node.1 == merkle_dag_node.1 {
-                    // 重複があった場合
-                    // selfのnodeをmerkle_dagのnodeにマージする
-                    let mut child_cids = Vec::new();
-                    child_cids.push(self_node.0.clone());
-                    child_cids.push(merkle_dag_node.0.clone());
-                    let node = Node::new(("add".to_string(), self_node.1), child_cids);
-                    self.graph.add_node(node.cid.clone());
-                    self.map.insert(node.cid.clone(), node);
-                    return self;
-                }
-            }
+            return self.clone();
         } */
 
-        todo!()
+        // selfとmerkle_dagのノードの重複を探してマージする
+
+        let mut merged_dag = MerkleDag::new();
+
+        // selfのグラフをmerged_dagにコピー
+        for self_node in &self.map {
+            let parent_cid = self_node.0;
+            let parent_node = self_node.1;
+            merged_dag.graph.add_node(parent_cid.clone());
+            merged_dag
+                .map
+                .insert(parent_cid.clone(), parent_node.clone());
+        }
+
+        // merkle_dagのグラフをmerged_dagにコピー
+        for merkle_dag_node in &merkle_dag.map {
+            let parent_cid = merkle_dag_node.0;
+            let parent_node = merkle_dag_node.1;
+            merged_dag.graph.add_node(parent_cid.clone());
+            merged_dag
+                .map
+                .insert(parent_cid.clone(), parent_node.clone());
+        }
+
+        merged_dag
     }
 
     fn dfs(&self, cids: &Vec<Cid>, used: &mut HashSet<Cid>) -> HashSet<i64> {
