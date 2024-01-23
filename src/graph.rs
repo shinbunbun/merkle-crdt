@@ -17,8 +17,8 @@ impl Graph {
         }
         self.nodes.push(cid);
     }
-    pub fn pop_node(&mut self) -> Option<Cid> {
-        self.nodes.pop()
+    pub fn delete_all_nodes(&mut self) {
+        self.nodes = Vec::new();
     }
     pub fn get_nodes(&self) -> &Vec<Cid> {
         &self.nodes

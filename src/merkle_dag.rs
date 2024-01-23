@@ -16,7 +16,9 @@ impl MerkleDag {
         }
     }
 
-    pub fn add_node(&mut self, node: Node) {
+    pub fn add_node(&mut self, payload: (String, i64)) {
+        let node = Node::new(payload, self.graph.get_nodes().clone());
+        self.graph.delete_all_nodes();
         self.graph.add_node(node.cid.clone());
         self.map.insert(node.cid.clone(), node);
     }

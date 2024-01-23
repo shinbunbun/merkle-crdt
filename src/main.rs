@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    vec,
-};
+use std::collections::{HashMap, HashSet};
 
 use cid::Cid;
 use merkle_dag::MerkleDag;
@@ -33,34 +30,8 @@ fn main() {
             std::io::stdin().read_line(&mut value).unwrap();
             let value = value.trim().parse::<i64>().unwrap();
 
-            // Graphが空でない場合
-            if let Some(root_cid) = merkle_dag.graph.pop_node() {
-                println!("root_cid: {:?}", root_cid);
-
-                // Nodeを作成
-                let node = Node::new(("add".to_string(), value), vec![root_cid.clone()]);
-                println!("node: {:?}", node);
-
-                // GraphにNodeのCIDを追加
-                merkle_dag.graph.add_node(node.cid.clone());
-
-                // HashMapにNodeを追加
-                // これをすることによりCIDからNodeを引くことができるようになる
-                merkle_dag.map.insert(node.cid.clone(), node);
-                println!("graph: {:?}", merkle_dag.graph);
-            } else {
-                // Nodeを作成
-                let node = Node::new(("add".to_string(), value), Vec::new());
-                println!("node: {:?}", node);
-
-                // GraphにNodeのCIDを追加
-                merkle_dag.graph.add_node(node.cid.clone());
-
-                // HashMapにNodeを追加
-                // これをすることによりCIDからNodeを引くことができるようになる
-                merkle_dag.map.insert(node.cid.clone(), node);
-                println!("graph: {:?}", merkle_dag.graph);
-            }
+            merkle_dag.add_node(("add".to_string(), value));
+            println!("graph: {:?}", merkle_dag.graph);
         } else if input == "lookup" {
             // グラフを辿ってsetを作成
             let mut set = HashSet::<i64>::new();
