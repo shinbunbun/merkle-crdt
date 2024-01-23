@@ -2,7 +2,7 @@ use crate::cid::Cid;
 
 #[derive(Debug, Clone)]
 pub struct Graph {
-    //TODO: Setにする
+    //TODO: Setにする？
     nodes: Vec<Cid>,
 }
 
