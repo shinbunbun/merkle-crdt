@@ -34,14 +34,8 @@ fn main() {
             println!("graph: {:?}", merkle_dag.graph);
         } else if input == "lookup" {
             // グラフを辿ってsetを作成
-            let mut set = HashSet::<i64>::new();
-            let root_cid = merkle_dag.graph.get_nodes().last().unwrap();
-            println!("root_cid: {:?}", root_cid);
-            let root_node = merkle_dag.map.get(root_cid).unwrap();
-            let value = root_node.payload.1;
-            set.insert(value);
-            search_child(root_cid, &merkle_dag.map, &mut set);
-            println!("set: {:?}", set)
+            let set = merkle_dag.search();
+            println!("set: {:?}", set);
         }
     }
 }
