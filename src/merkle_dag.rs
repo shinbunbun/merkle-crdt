@@ -121,6 +121,8 @@ impl MerkleDag {
 
 #[cfg(test)]
 mod test {
+    use std::collections::{HashMap, HashSet};
+
     use crate::node::Node;
 
     use super::MerkleDag;
@@ -233,18 +235,21 @@ mod test {
             .insert(dag_b_node5.cid.clone(), dag_b_node5.clone());
         dag_b.graph.add_node(dag_b_node5.cid.clone());
 
-        println!("dag_a: {:?}", dag_a.search());
+        // println!("dag_a: {:?}", dag_a.search());
+        dag_a.merge(&dag_b);
+        // println!("dag_b: {:?}", dag_b.search());
+        // println!("dag_a(merged): {:?}", dag_a.search());
 
-        dag_a.merge(&mut dag_b);
-
-        println!("dag_b: {:?}", dag_b.search());
-        println!("dag_a(merged): {:?}", dag_a.search());
+        let result1: HashSet<i64> = [1, 2, 3, 4, 5].iter().cloned().collect();
+        assert_eq!(dag_a.search(), result1);
 
         // 同じDAGをマージした場合のテスト
         let dag_a_a = dag_a.clone();
-        println!("dag_a: {:?}", dag_a.search());
+        // println!("dag_a: {:?}", dag_a.search());
         dag_a.merge(&dag_a_a);
-        println!("dag_a(merged): {:?}", dag_a.search());
+        // println!("dag_a(merged): {:?}", dag_a.search());
+        let result2: HashSet<i64> = [1, 2, 3, 4, 5].iter().cloned().collect();
+        assert_eq!(dag_a.search(), result2);
 
         // DAG CとDAG Dに共通するノードがある場合のテスト
         // DAG C
@@ -305,12 +310,15 @@ mod test {
             .insert(dag_d_node5.cid.clone(), dag_d_node5.clone());
         dag_d.graph.add_node(dag_d_node5.cid.clone());
 
-        println!("dag_c: {:?}", dag_c.search());
+        // println!("dag_c: {:?}", dag_c.search());
 
         dag_c.merge(&dag_d);
 
-        println!("dag_d: {:?}", dag_d.search());
-        println!("dag_c(merged): {:?}", dag_c.search());
+        // println!("dag_d: {:?}", dag_d.search());
+        // println!("dag_c(merged): {:?}", dag_c.search());
+
+        let result3: HashSet<i64> = [1, 2, 3, 4, 5, 6, 7, 8].iter().cloned().collect();
+        assert_eq!(dag_c.search(), result3);
 
         // DAG EとDAG Fに共通するノードがない場合のテスト
         // DAG E
@@ -349,12 +357,15 @@ mod test {
             .insert(dag_f_node3.cid.clone(), dag_f_node3.clone());
         dag_f.graph.add_node(dag_f_node3.cid.clone());
 
-        println!("dag_e: {:?}", dag_e.search());
+        // println!("dag_e: {:?}", dag_e.search());
 
         dag_e.merge(&dag_f);
 
-        println!("dag_f: {:?}", dag_f.search());
-        println!("dag_e(merged): {:?}", dag_e.search());
+        // println!("dag_f: {:?}", dag_f.search());
+        // println!("dag_e(merged): {:?}", dag_e.search());
+
+        let result4: HashSet<i64> = [1, 2, 3, 4, 5, 6].iter().cloned().collect();
+        assert_eq!(dag_e.search(), result4);
 
         // 複数のルートを持つ場合のテスト
         // DAG G
@@ -387,10 +398,13 @@ mod test {
             .insert(dag_h_node3.cid.clone(), dag_h_node3.clone());
         dag_h.graph.add_node(dag_h_node2.cid.clone());
 
-        println!("dag_g: {:?}", dag_g.search());
+        // println!("dag_g: {:?}", dag_g.search());
 
         dag_g.merge(&dag_h);
-        println!("dag_h: {:?}", dag_h.search());
-        println!("dag_g(merged): {:?}", dag_g.search());
+        // println!("dag_h: {:?}", dag_h.search());
+        // println!("dag_g(merged): {:?}", dag_g.search());
+
+        let result5: HashSet<i64> = [1, 2, 4, 5].iter().cloned().collect();
+        assert_eq!(dag_g.search(), result5);
     }
 }
