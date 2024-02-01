@@ -1,11 +1,13 @@
 use std::collections::{HashMap, HashSet};
 
 use cid::Cid;
+use dag_pool::DagPool;
 use merkle_dag::MerkleDag;
 
 use crate::node::Node;
 
 mod cid;
+mod dag_pool;
 mod graph;
 mod merkle_dag;
 mod node;
@@ -13,6 +15,7 @@ mod node;
 fn main() {
     // 必要なデータ構造の定義
     let mut merkle_dag = MerkleDag::new();
+    let mut dag_pool = DagPool::new();
 
     loop {
         println!("input operation(add, lookup)");
@@ -30,11 +33,11 @@ fn main() {
             std::io::stdin().read_line(&mut value).unwrap();
             let value = value.trim().parse::<i64>().unwrap();
 
-            merkle_dag.add_node(("add".to_string(), value));
+            merkle_dag.add_node(("add".to_string(), value), &mut dag_pool);
             println!("graph: {:?}", merkle_dag.graph);
         } else if input == "lookup" {
             // グラフを辿ってsetを作成
-            let set = merkle_dag.search();
+            let set = merkle_dag.search(&dag_pool);
             println!("set: {:?}", set);
         }
     }
