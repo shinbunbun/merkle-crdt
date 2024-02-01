@@ -25,7 +25,8 @@ impl MerkleDag {
 
     pub fn search(&self) -> HashSet<i64> {
         let mut used = HashSet::new();
-        let result = self.dfs(self.graph.get_nodes(), &mut used);
+        let mut result = HashSet::new();
+        self.dfs(self.graph.get_nodes(), &mut used, &mut result);
         result
     }
 
@@ -113,19 +114,16 @@ impl MerkleDag {
         merged_dag
     }
 
-    fn dfs(&self, cids: &Vec<Cid>, used: &mut HashSet<Cid>) -> HashSet<i64> {
-        let mut set = HashSet::new();
+    fn dfs(&self, cids: &Vec<Cid>, used: &mut HashSet<Cid>, set: &mut HashSet<i64>) {
         for cid in cids {
             if used.contains(cid) {
                 continue;
             }
             used.insert(cid.clone());
             let node = self.map.get(cid).unwrap();
-            let mut child_set = self.dfs(&node.child_cids, used);
+            self.dfs(&node.child_cids, used, set);
             set.insert(node.payload.1);
-            set.extend(child_set.drain());
         }
-        set
     }
 }
 
