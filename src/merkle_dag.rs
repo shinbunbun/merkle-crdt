@@ -30,88 +30,68 @@ impl MerkleDag {
         result
     }
 
-    pub fn merge<'a>(&'a self, merkle_dag: &'a MerkleDag) -> Self {
+    pub fn merge<'a>(&'a mut self, merkle_dag: &'a MerkleDag) {
         // rootが同じかの確認
         if self.graph.get_nodes() == merkle_dag.graph.get_nodes() {
             // 同じならマージしない
-            return self.clone();
+            return;
         }
 
         // rootが異なる場合
 
-        // selfのNodeとmerkle_dagのNodeのidと値を全てとってくる
-        let self_cid_val_set = self
-            .map
-            .iter()
-            .map(|(cid, node)| (cid, node.payload.1))
-            .collect::<Vec<(&Cid, i64)>>();
-        let merkle_dag_cid_val_set = merkle_dag
-            .map
-            .iter()
-            .map(|(cid, node)| (cid, node.payload.1))
-            .collect::<Vec<(&Cid, i64)>>();
-
         // selfのrootがmerkle_dagに完全に含まれている場合
         // selfはmerkle_dagに完全に含まれている(部分木になっている)ためmerkle_dagを返す
-        let merkle_dag_cid_val_set_len = merkle_dag_cid_val_set.len();
+        let mut used = HashSet::new();
+        let mut merkle_dag_cid_set = HashSet::new();
+        merkle_dag.dfs_cid(
+            merkle_dag.graph.get_nodes(),
+            &mut used,
+            &mut merkle_dag_cid_set,
+        );
+        let merkle_dag_cid_set_len = merkle_dag_cid_set.len();
         let mut cnt = 0;
-        for merkle_dag_node in merkle_dag_cid_val_set {
-            for self_node in self.graph.get_nodes() {
-                if merkle_dag_node.0 == self_node {
+        for merkle_dag_node_cid in merkle_dag_cid_set {
+            for self_node_cid in self.graph.get_nodes() {
+                if merkle_dag_node_cid == self_node_cid {
                     cnt += 1;
                 }
             }
         }
-        if cnt == merkle_dag_cid_val_set_len {
-            return merkle_dag.clone();
+        if cnt == merkle_dag_cid_set_len {
+            *self = merkle_dag.clone();
+            return;
         }
 
         // merkle_dagのrootがselfに完全に含まれている場合
         // merkle_dagはselfに完全に含まれている(部分木になっている)ためmerkle_dagを返す
-        let self_cid_val_set_len = self_cid_val_set.len();
+        used = HashSet::new();
+        let mut self_cid_set = HashSet::new();
+        self.dfs_cid(self.graph.get_nodes(), &mut used, &mut self_cid_set);
+        let self_cid_set_len = self_cid_set.len();
         cnt = 0;
-        for self_node in self_cid_val_set {
-            for merkle_dag_node in merkle_dag.graph.get_nodes() {
-                if self_node.0 == merkle_dag_node {
+        for self_node_cid in self_cid_set {
+            for merkle_dag_node_cid in merkle_dag.graph.get_nodes() {
+                if self_node_cid == merkle_dag_node_cid {
                     cnt += 1;
                 }
             }
         }
-        if cnt == self_cid_val_set_len {
-            return self.clone();
+        if cnt == self_cid_set_len {
+            return;
         }
 
         // selfとmerkle_dagのノードの重複を探してマージする
 
-        let mut merged_dag = MerkleDag::new();
-
-        // selfのグラフをmerged_dagにコピー
-        for self_node in &self.map {
-            let parent_cid = self_node.0;
-            let parent_node = self_node.1;
-            // merged_dag.graph.add_node(parent_cid.clone());
-            merged_dag
-                .map
-                .insert(parent_cid.clone(), parent_node.clone());
-        }
-        for self_node_cid in self.graph.get_nodes() {
-            merged_dag.graph.add_node(self_node_cid.clone());
-        }
-
-        // merkle_dagのグラフをmerged_dagにコピー
+        // merkle_dagのグラフをselfにコピー
         for merkle_dag_node in &merkle_dag.map {
             let parent_cid = merkle_dag_node.0;
             let parent_node = merkle_dag_node.1;
             // merged_dag.graph.add_node(parent_cid.clone());
-            merged_dag
-                .map
-                .insert(parent_cid.clone(), parent_node.clone());
+            self.map.insert(parent_cid.clone(), parent_node.clone());
         }
         for merkle_dag_node_cid in merkle_dag.graph.get_nodes() {
-            merged_dag.graph.add_node(merkle_dag_node_cid.clone());
+            self.graph.add_node(merkle_dag_node_cid.clone());
         }
-
-        merged_dag
     }
 
     fn dfs(&self, cids: &Vec<Cid>, used: &mut HashSet<Cid>, set: &mut HashSet<i64>) {
@@ -123,6 +103,18 @@ impl MerkleDag {
             let node = self.map.get(cid).unwrap();
             self.dfs(&node.child_cids, used, set);
             set.insert(node.payload.1);
+        }
+    }
+
+    fn dfs_cid<'a>(&'a self, cids: &Vec<Cid>, used: &mut HashSet<Cid>, set: &mut HashSet<&'a Cid>) {
+        for cid in cids {
+            if used.contains(cid) {
+                continue;
+            }
+            used.insert(cid.clone());
+            let node = self.map.get(cid).unwrap();
+            self.dfs_cid(&node.child_cids, used, set);
+            set.insert(&node.cid);
         }
     }
 }
@@ -241,17 +233,18 @@ mod test {
             .insert(dag_b_node5.cid.clone(), dag_b_node5.clone());
         dag_b.graph.add_node(dag_b_node5.cid.clone());
 
-        let dag_a_b = dag_a.merge(&dag_b);
-
         println!("dag_a: {:?}", dag_a.search());
+
+        dag_a.merge(&mut dag_b);
+
         println!("dag_b: {:?}", dag_b.search());
-        println!("dag_a_b: {:?}", dag_a_b.search());
+        println!("dag_a(merged): {:?}", dag_a.search());
 
         // 同じDAGをマージした場合のテスト
-        let dag_a_a = dag_a.merge(&dag_a);
-
+        let dag_a_a = dag_a.clone();
         println!("dag_a: {:?}", dag_a.search());
-        println!("dag_a_a: {:?}", dag_a_a.search());
+        dag_a.merge(&dag_a_a);
+        println!("dag_a(merged): {:?}", dag_a.search());
 
         // DAG CとDAG Dに共通するノードがある場合のテスト
         // DAG C
@@ -312,11 +305,12 @@ mod test {
             .insert(dag_d_node5.cid.clone(), dag_d_node5.clone());
         dag_d.graph.add_node(dag_d_node5.cid.clone());
 
-        let dag_c_d = dag_c.merge(&dag_d);
-
         println!("dag_c: {:?}", dag_c.search());
+
+        dag_c.merge(&dag_d);
+
         println!("dag_d: {:?}", dag_d.search());
-        println!("dag_c_d: {:?}", dag_c_d.search());
+        println!("dag_c(merged): {:?}", dag_c.search());
 
         // DAG EとDAG Fに共通するノードがない場合のテスト
         // DAG E
@@ -355,11 +349,12 @@ mod test {
             .insert(dag_f_node3.cid.clone(), dag_f_node3.clone());
         dag_f.graph.add_node(dag_f_node3.cid.clone());
 
-        let dag_e_f = dag_e.merge(&dag_f);
-
         println!("dag_e: {:?}", dag_e.search());
+
+        dag_e.merge(&dag_f);
+
         println!("dag_f: {:?}", dag_f.search());
-        println!("dag_e_f: {:?}", dag_e_f.search());
+        println!("dag_e(merged): {:?}", dag_e.search());
 
         // 複数のルートを持つ場合のテスト
         // DAG G
@@ -392,10 +387,10 @@ mod test {
             .insert(dag_h_node3.cid.clone(), dag_h_node3.clone());
         dag_h.graph.add_node(dag_h_node2.cid.clone());
 
-        let dag_g_h = dag_g.merge(&dag_h);
-
         println!("dag_g: {:?}", dag_g.search());
+
+        dag_g.merge(&dag_h);
         println!("dag_h: {:?}", dag_h.search());
-        println!("dag_g_h: {:?}", dag_g_h.search());
+        println!("dag_g(merged): {:?}", dag_g.search());
     }
 }
