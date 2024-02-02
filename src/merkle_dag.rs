@@ -18,7 +18,7 @@ impl MerkleDag {
         let node = Node::new(payload, self.graph.get_nodes().clone());
         self.graph.delete_all_nodes();
         self.graph.add_node(node.cid.clone());
-        dag_pool.map.insert(node.cid.clone(), node);
+        dag_pool.put_node(node.cid.clone(), node);
     }
 
     pub fn search(&self, dag_pool: &DagSyncer) -> HashSet<i64> {
@@ -110,7 +110,7 @@ impl MerkleDag {
                 continue;
             }
             used.insert(cid.clone());
-            let node = dag_pool.map.get(cid).unwrap();
+            let node = dag_pool.get_node(cid).unwrap();
             self.dfs(&node.child_cids, used, set, dag_pool);
             set.insert(node.payload.1);
         }
@@ -128,7 +128,7 @@ impl MerkleDag {
                 continue;
             }
             used.insert(cid.clone());
-            let node = dag_pool.map.get(cid).unwrap();
+            let node = dag_pool.get_node(cid).unwrap();
             self.dfs_cid(&node.child_cids, used, set, dag_pool);
             set.insert(&node.cid);
         }
@@ -154,37 +154,37 @@ mod test {
         // Nodeを作成してDAGに挿入
         let node1 = Node::new(("add".to_string(), 1), Vec::new());
         merkle_dag.graph.add_node(node1.cid.clone());
-        dag_pool.map.insert(node1.cid.clone(), node1.clone());
+        dag_pool.put_node(node1.cid.clone(), node1.clone());
         let node2 = Node::new(("add".to_string(), 2), vec![node1.cid.clone()]);
         merkle_dag.graph.add_node(node2.cid.clone());
-        dag_pool.map.insert(node2.cid.clone(), node2.clone());
+        dag_pool.put_node(node2.cid.clone(), node2.clone());
         let node3 = Node::new(("add".to_string(), 3), Vec::new());
         merkle_dag.graph.add_node(node3.cid.clone());
-        dag_pool.map.insert(node3.cid.clone(), node3.clone());
+        dag_pool.put_node(node3.cid.clone(), node3.clone());
         let node4 = Node::new(
             ("add".to_string(), 4),
             vec![node2.cid.clone(), node3.cid.clone()],
         );
         merkle_dag.graph.add_node(node4.cid.clone());
-        dag_pool.map.insert(node4.cid.clone(), node4.clone());
+        dag_pool.put_node(node4.cid.clone(), node4.clone());
         let node5 = Node::new(("add".to_string(), 5), Vec::new());
         merkle_dag.graph.add_node(node5.cid.clone());
-        dag_pool.map.insert(node5.cid.clone(), node5.clone());
+        dag_pool.put_node(node5.cid.clone(), node5.clone());
         let node6 = Node::new(("add".to_string(), 6), Vec::new());
         merkle_dag.graph.add_node(node6.cid.clone());
-        dag_pool.map.insert(node6.cid.clone(), node6.clone());
+        dag_pool.put_node(node6.cid.clone(), node6.clone());
         let node7 = Node::new(
             ("add".to_string(), 7),
             vec![node5.cid.clone(), node4.cid.clone()],
         );
         merkle_dag.graph.add_node(node7.cid.clone());
-        dag_pool.map.insert(node7.cid.clone(), node7);
+        dag_pool.put_node(node7.cid.clone(), node7);
         let node8 = Node::new(
             ("add".to_string(), 8),
             vec![node4.cid.clone(), node6.cid.clone()],
         );
         merkle_dag.graph.add_node(node8.cid.clone());
-        dag_pool.map.insert(node8.cid.clone(), node8);
+        dag_pool.put_node(node8.cid.clone(), node8);
 
         // DAGを辿ってsetを作成
         let set = merkle_dag.search(&dag_pool);
@@ -214,15 +214,9 @@ mod test {
             ("add".to_string(), 4),
             vec![dag_a_node1.cid.clone(), dag_a_node2.cid.clone()],
         );
-        dag_pool
-            .map
-            .insert(dag_a_node1.cid.clone(), dag_a_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_a_node2.cid.clone(), dag_a_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_a_node3.cid.clone(), dag_a_node3.clone());
+        dag_pool.put_node(dag_a_node1.cid.clone(), dag_a_node1.clone());
+        dag_pool.put_node(dag_a_node2.cid.clone(), dag_a_node2.clone());
+        dag_pool.put_node(dag_a_node3.cid.clone(), dag_a_node3.clone());
         dag_a.graph.add_node(dag_a_node3.cid.clone());
 
         // DAG B
@@ -237,21 +231,11 @@ mod test {
             ("add".to_string(), 4),
             vec![dag_b_node3.cid.clone(), dag_b_node4.cid.clone()],
         );
-        dag_pool
-            .map
-            .insert(dag_b_node1.cid.clone(), dag_b_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_b_node2.cid.clone(), dag_b_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_b_node3.cid.clone(), dag_b_node3.clone());
-        dag_pool
-            .map
-            .insert(dag_b_node4.cid.clone(), dag_b_node4.clone());
-        dag_pool
-            .map
-            .insert(dag_b_node5.cid.clone(), dag_b_node5.clone());
+        dag_pool.put_node(dag_b_node1.cid.clone(), dag_b_node1.clone());
+        dag_pool.put_node(dag_b_node2.cid.clone(), dag_b_node2.clone());
+        dag_pool.put_node(dag_b_node3.cid.clone(), dag_b_node3.clone());
+        dag_pool.put_node(dag_b_node4.cid.clone(), dag_b_node4.clone());
+        dag_pool.put_node(dag_b_node5.cid.clone(), dag_b_node5.clone());
         dag_b.graph.add_node(dag_b_node5.cid.clone());
 
         // println!("dag_a: {:?}", dag_a.search());
@@ -283,21 +267,11 @@ mod test {
             ("add".to_string(), 1),
             vec![dag_c_node3.cid.clone(), dag_c_node4.cid.clone()],
         );
-        dag_pool
-            .map
-            .insert(dag_c_node1.cid.clone(), dag_c_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_c_node2.cid.clone(), dag_c_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_c_node3.cid.clone(), dag_c_node3.clone());
-        dag_pool
-            .map
-            .insert(dag_c_node4.cid.clone(), dag_c_node4.clone());
-        dag_pool
-            .map
-            .insert(dag_c_node5.cid.clone(), dag_c_node5.clone());
+        dag_pool.put_node(dag_c_node1.cid.clone(), dag_c_node1.clone());
+        dag_pool.put_node(dag_c_node2.cid.clone(), dag_c_node2.clone());
+        dag_pool.put_node(dag_c_node3.cid.clone(), dag_c_node3.clone());
+        dag_pool.put_node(dag_c_node4.cid.clone(), dag_c_node4.clone());
+        dag_pool.put_node(dag_c_node5.cid.clone(), dag_c_node5.clone());
         dag_c.graph.add_node(dag_c_node5.cid.clone());
 
         // DAG D
@@ -312,21 +286,11 @@ mod test {
             ("add".to_string(), 6),
             vec![dag_d_node3.cid.clone(), dag_d_node4.cid.clone()],
         );
-        dag_pool
-            .map
-            .insert(dag_d_node1.cid.clone(), dag_d_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_d_node2.cid.clone(), dag_d_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_d_node3.cid.clone(), dag_d_node3.clone());
-        dag_pool
-            .map
-            .insert(dag_d_node4.cid.clone(), dag_d_node4.clone());
-        dag_pool
-            .map
-            .insert(dag_d_node5.cid.clone(), dag_d_node5.clone());
+        dag_pool.put_node(dag_d_node1.cid.clone(), dag_d_node1.clone());
+        dag_pool.put_node(dag_d_node2.cid.clone(), dag_d_node2.clone());
+        dag_pool.put_node(dag_d_node3.cid.clone(), dag_d_node3.clone());
+        dag_pool.put_node(dag_d_node4.cid.clone(), dag_d_node4.clone());
+        dag_pool.put_node(dag_d_node5.cid.clone(), dag_d_node5.clone());
         dag_d.graph.add_node(dag_d_node5.cid.clone());
 
         // println!("dag_c: {:?}", dag_c.search());
@@ -347,15 +311,9 @@ mod test {
             ("add".to_string(), 3),
             vec![dag_e_node1.cid.clone(), dag_e_node2.cid.clone()],
         );
-        dag_pool
-            .map
-            .insert(dag_e_node1.cid.clone(), dag_e_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_e_node2.cid.clone(), dag_e_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_e_node3.cid.clone(), dag_e_node3.clone());
+        dag_pool.put_node(dag_e_node1.cid.clone(), dag_e_node1.clone());
+        dag_pool.put_node(dag_e_node2.cid.clone(), dag_e_node2.clone());
+        dag_pool.put_node(dag_e_node3.cid.clone(), dag_e_node3.clone());
         dag_e.graph.add_node(dag_e_node3.cid.clone());
 
         // DAG F
@@ -365,15 +323,9 @@ mod test {
             ("add".to_string(), 6),
             vec![dag_f_node1.cid.clone(), dag_f_node2.cid.clone()],
         );
-        dag_pool
-            .map
-            .insert(dag_f_node1.cid.clone(), dag_f_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_f_node2.cid.clone(), dag_f_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_f_node3.cid.clone(), dag_f_node3.clone());
+        dag_pool.put_node(dag_f_node1.cid.clone(), dag_f_node1.clone());
+        dag_pool.put_node(dag_f_node2.cid.clone(), dag_f_node2.clone());
+        dag_pool.put_node(dag_f_node3.cid.clone(), dag_f_node3.clone());
         dag_f.graph.add_node(dag_f_node3.cid.clone());
 
         // println!("dag_e: {:?}", dag_e.search());
@@ -391,30 +343,18 @@ mod test {
         let dag_g_node1 = Node::new(("add".to_string(), 1), Vec::new());
         let dag_g_node2 = Node::new(("add".to_string(), 2), vec![dag_g_node1.cid.clone()]);
         let dag_g_node3 = Node::new(("add".to_string(), 3), vec![dag_g_node1.cid.clone()]);
-        dag_pool
-            .map
-            .insert(dag_g_node1.cid.clone(), dag_g_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_g_node2.cid.clone(), dag_g_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_g_node3.cid.clone(), dag_g_node3.clone());
+        dag_pool.put_node(dag_g_node1.cid.clone(), dag_g_node1.clone());
+        dag_pool.put_node(dag_g_node2.cid.clone(), dag_g_node2.clone());
+        dag_pool.put_node(dag_g_node3.cid.clone(), dag_g_node3.clone());
         dag_g.graph.add_node(dag_g_node2.cid.clone());
 
         // DAG H
         let dag_h_node1 = Node::new(("add".to_string(), 4), Vec::new());
         let dag_h_node2 = Node::new(("add".to_string(), 5), vec![dag_h_node1.cid.clone()]);
         let dag_h_node3 = Node::new(("add".to_string(), 6), vec![dag_h_node1.cid.clone()]);
-        dag_pool
-            .map
-            .insert(dag_h_node1.cid.clone(), dag_h_node1.clone());
-        dag_pool
-            .map
-            .insert(dag_h_node2.cid.clone(), dag_h_node2.clone());
-        dag_pool
-            .map
-            .insert(dag_h_node3.cid.clone(), dag_h_node3.clone());
+        dag_pool.put_node(dag_h_node1.cid.clone(), dag_h_node1.clone());
+        dag_pool.put_node(dag_h_node2.cid.clone(), dag_h_node2.clone());
+        dag_pool.put_node(dag_h_node3.cid.clone(), dag_h_node3.clone());
         dag_h.graph.add_node(dag_h_node2.cid.clone());
 
         // println!("dag_g: {:?}", dag_g.search());
