@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::{cid::Cid, dag_pool::DagPool, graph::Graph, node::Node};
+use crate::{cid::Cid, dag_syncer::DagSyncer, graph::Graph, node::Node};
 
 #[derive(Debug, Clone)]
 pub struct MerkleDag {
@@ -14,21 +14,21 @@ impl MerkleDag {
         }
     }
 
-    pub fn add_node(&mut self, payload: (String, i64), dag_pool: &mut DagPool) {
+    pub fn add_node(&mut self, payload: (String, i64), dag_pool: &mut DagSyncer) {
         let node = Node::new(payload, self.graph.get_nodes().clone());
         self.graph.delete_all_nodes();
         self.graph.add_node(node.cid.clone());
         dag_pool.map.insert(node.cid.clone(), node);
     }
 
-    pub fn search(&self, dag_pool: &DagPool) -> HashSet<i64> {
+    pub fn search(&self, dag_pool: &DagSyncer) -> HashSet<i64> {
         let mut used = HashSet::new();
         let mut result = HashSet::new();
         self.dfs(self.graph.get_nodes(), &mut used, &mut result, dag_pool);
         result
     }
 
-    pub fn merge<'a>(&'a mut self, merkle_dag: &'a MerkleDag, dag_pool: &DagPool) {
+    pub fn merge<'a>(&'a mut self, merkle_dag: &'a MerkleDag, dag_pool: &DagSyncer) {
         // rootが同じかの確認
         if self.graph.get_nodes() == merkle_dag.graph.get_nodes() {
             // 同じならマージしない
@@ -103,7 +103,7 @@ impl MerkleDag {
         cids: &Vec<Cid>,
         used: &mut HashSet<Cid>,
         set: &mut HashSet<i64>,
-        dag_pool: &DagPool,
+        dag_pool: &DagSyncer,
     ) {
         for cid in cids {
             if used.contains(cid) {
@@ -121,7 +121,7 @@ impl MerkleDag {
         cids: &Vec<Cid>,
         used: &mut HashSet<Cid>,
         set: &mut HashSet<&'a Cid>,
-        dag_pool: &'a DagPool,
+        dag_pool: &'a DagSyncer,
     ) {
         for cid in cids {
             if used.contains(cid) {
@@ -139,7 +139,7 @@ impl MerkleDag {
 mod test {
     use std::collections::{HashMap, HashSet};
 
-    use crate::{dag_pool::DagPool, node::Node};
+    use crate::{dag_syncer::DagSyncer, node::Node};
 
     use super::MerkleDag;
 
@@ -149,7 +149,7 @@ mod test {
         use crate::node::Node;
 
         let mut merkle_dag = MerkleDag::new();
-        let mut dag_pool = DagPool::new();
+        let mut dag_pool = DagSyncer::new();
 
         // Nodeを作成してDAGに挿入
         let node1 = Node::new(("add".to_string(), 1), Vec::new());
@@ -202,7 +202,7 @@ mod test {
         let mut dag_g = MerkleDag::new();
         let mut dag_h = MerkleDag::new();
 
-        let mut dag_pool = DagPool::new();
+        let mut dag_pool = DagSyncer::new();
 
         // Nodeを作成してDAGに挿入
 

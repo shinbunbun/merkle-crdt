@@ -1,13 +1,13 @@
 use std::collections::{HashMap, HashSet};
 
 use cid::Cid;
-use dag_pool::DagPool;
+use dag_syncer::DagSyncer;
 use merkle_dag::MerkleDag;
 
 use crate::node::Node;
 
 mod cid;
-mod dag_pool;
+mod dag_syncer;
 mod graph;
 mod merkle_dag;
 mod node;
@@ -15,7 +15,7 @@ mod node;
 fn main() {
     // 必要なデータ構造の定義
     let mut merkle_dag = MerkleDag::new();
-    let mut dag_pool = DagPool::new();
+    let mut dag_pool = DagSyncer::new();
 
     loop {
         println!("input operation(add, lookup)");
