@@ -141,6 +141,8 @@ impl MerkleDag {
 mod test {
     use std::collections::{BTreeSet, HashSet};
 
+    use rand::Rng;
+
     use crate::{dag_syncer::DagSyncer, node::Node};
 
     use super::MerkleDag;
@@ -407,4 +409,27 @@ mod test {
         let result5: HashSet<i64> = [1, 2, 4, 5].iter().cloned().collect();
         assert_eq!(dag_g.search(&dag_pool), result5);
     }
+
+    /* #[test]
+    fn random_test() {
+        for _ in 0..100 {
+            let mut dag_a = MerkleDag::new();
+            let mut dag_b = MerkleDag::new();
+
+            let mut dag_pool = DagSyncer::new();
+
+            let mut rng = rand::thread_rng();
+            let random1 = rng.gen_range(0..100000);
+            for _ in 0..random1 {
+                for cid in dag_a.graph.get_nodes() {
+                    let node = dag_pool.get_node(cid).unwrap();
+                    print!("{} ", node.payload.1);
+                }
+                let node = Node::new(("add".to_string(), random1), BTreeSet::new());
+                dag_a.graph.add_node(node.cid.clone());
+                dag_pool.put_node(node.cid.clone(), node);
+            }
+            print!("random1: {}\n", random1);
+        }
+    } */
 }
