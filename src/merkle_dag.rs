@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 
 use crate::{cid::Cid, dag_syncer::DagSyncer, graph::Graph, node::Node};
 
@@ -41,22 +41,17 @@ impl MerkleDag {
         // selfはmerkle_dagに完全に含まれている(部分木になっている)ためmerkle_dagを返す
         let mut used = HashSet::new();
         let mut merkle_dag_cid_set = HashSet::new();
+        let mut duplicate_cnt = 0;
         merkle_dag.dfs_cid(
             merkle_dag.graph.get_nodes(),
             &mut used,
             &mut merkle_dag_cid_set,
             dag_pool,
+            self.graph.get_nodes(),
+            duplicate_cnt,
         );
         let merkle_dag_cid_set_len = merkle_dag_cid_set.len();
-        let mut cnt = 0;
-        for merkle_dag_node_cid in merkle_dag_cid_set {
-            for self_node_cid in self.graph.get_nodes() {
-                if merkle_dag_node_cid == self_node_cid {
-                    cnt += 1;
-                }
-            }
-        }
-        if cnt == merkle_dag_cid_set_len {
+        if duplicate_cnt == merkle_dag_cid_set_len {
             *self = merkle_dag.clone();
             return;
         }
@@ -65,22 +60,17 @@ impl MerkleDag {
         // merkle_dagはselfに完全に含まれている(部分木になっている)ためmerkle_dagを返す
         used = HashSet::new();
         let mut self_cid_set = HashSet::new();
+        duplicate_cnt = 0;
         self.dfs_cid(
             self.graph.get_nodes(),
             &mut used,
             &mut self_cid_set,
             dag_pool,
+            merkle_dag.graph.get_nodes(),
+            duplicate_cnt,
         );
         let self_cid_set_len = self_cid_set.len();
-        cnt = 0;
-        for self_node_cid in self_cid_set {
-            for merkle_dag_node_cid in merkle_dag.graph.get_nodes() {
-                if self_node_cid == merkle_dag_node_cid {
-                    cnt += 1;
-                }
-            }
-        }
-        if cnt == self_cid_set_len {
+        if duplicate_cnt == self_cid_set_len {
             return;
         }
 
@@ -100,7 +90,7 @@ impl MerkleDag {
 
     fn dfs(
         &self,
-        cids: &Vec<Cid>,
+        cids: &BTreeSet<Cid>,
         used: &mut HashSet<Cid>,
         set: &mut HashSet<i64>,
         dag_pool: &DagSyncer,
@@ -118,10 +108,12 @@ impl MerkleDag {
 
     fn dfs_cid<'a>(
         &'a self,
-        cids: &Vec<Cid>,
+        cids: &BTreeSet<Cid>,
         used: &mut HashSet<Cid>,
-        set: &mut HashSet<&'a Cid>,
+        set: &mut HashSet<Cid>,
         dag_pool: &'a DagSyncer,
+        merge_for_cids: &BTreeSet<Cid>,
+        mut duplicate_cnt: usize,
     ) {
         for cid in cids {
             if used.contains(cid) {
@@ -129,15 +121,25 @@ impl MerkleDag {
             }
             used.insert(cid.clone());
             let node = dag_pool.get_node(cid).unwrap();
-            self.dfs_cid(&node.child_cids, used, set, dag_pool);
-            set.insert(&node.cid);
+            self.dfs_cid(
+                &node.child_cids,
+                used,
+                set,
+                dag_pool,
+                merge_for_cids,
+                duplicate_cnt,
+            );
+            set.insert(node.cid.clone());
+            if merge_for_cids.contains(cid) {
+                duplicate_cnt += 1;
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashSet;
+    use std::collections::{BTreeSet, HashSet};
 
     use crate::{dag_syncer::DagSyncer, node::Node};
 
@@ -152,36 +154,45 @@ mod test {
         let mut dag_pool = DagSyncer::new();
 
         // Nodeを作成してDAGに挿入
-        let node1 = Node::new(("add".to_string(), 1), Vec::new());
+        let node1 = Node::new(("add".to_string(), 1), BTreeSet::new());
         merkle_dag.graph.add_node(node1.cid.clone());
         dag_pool.put_node(node1.cid.clone(), node1.clone());
-        let node2 = Node::new(("add".to_string(), 2), vec![node1.cid.clone()]);
+        let node2 = Node::new(
+            ("add".to_string(), 2),
+            vec![node1.cid.clone()].into_iter().collect(),
+        );
         merkle_dag.graph.add_node(node2.cid.clone());
         dag_pool.put_node(node2.cid.clone(), node2.clone());
-        let node3 = Node::new(("add".to_string(), 3), Vec::new());
+        let node3 = Node::new(("add".to_string(), 3), BTreeSet::new());
         merkle_dag.graph.add_node(node3.cid.clone());
         dag_pool.put_node(node3.cid.clone(), node3.clone());
         let node4 = Node::new(
             ("add".to_string(), 4),
-            vec![node2.cid.clone(), node3.cid.clone()],
+            vec![node2.cid.clone(), node3.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         merkle_dag.graph.add_node(node4.cid.clone());
         dag_pool.put_node(node4.cid.clone(), node4.clone());
-        let node5 = Node::new(("add".to_string(), 5), Vec::new());
+        let node5 = Node::new(("add".to_string(), 5), BTreeSet::new());
         merkle_dag.graph.add_node(node5.cid.clone());
         dag_pool.put_node(node5.cid.clone(), node5.clone());
-        let node6 = Node::new(("add".to_string(), 6), Vec::new());
+        let node6 = Node::new(("add".to_string(), 6), BTreeSet::new());
         merkle_dag.graph.add_node(node6.cid.clone());
         dag_pool.put_node(node6.cid.clone(), node6.clone());
         let node7 = Node::new(
             ("add".to_string(), 7),
-            vec![node5.cid.clone(), node4.cid.clone()],
+            vec![node5.cid.clone(), node4.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         merkle_dag.graph.add_node(node7.cid.clone());
         dag_pool.put_node(node7.cid.clone(), node7);
         let node8 = Node::new(
             ("add".to_string(), 8),
-            vec![node4.cid.clone(), node6.cid.clone()],
+            vec![node4.cid.clone(), node6.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         merkle_dag.graph.add_node(node8.cid.clone());
         dag_pool.put_node(node8.cid.clone(), node8);
@@ -208,11 +219,13 @@ mod test {
 
         // DAG AがDAG Bの部分木である場合のテスト
         // DAG A
-        let dag_a_node1 = Node::new(("add".to_string(), 2), Vec::new());
-        let dag_a_node2 = Node::new(("add".to_string(), 3), Vec::new());
+        let dag_a_node1 = Node::new(("add".to_string(), 2), BTreeSet::new());
+        let dag_a_node2 = Node::new(("add".to_string(), 3), BTreeSet::new());
         let dag_a_node3 = Node::new(
             ("add".to_string(), 4),
-            vec![dag_a_node1.cid.clone(), dag_a_node2.cid.clone()],
+            vec![dag_a_node1.cid.clone(), dag_a_node2.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         dag_pool.put_node(dag_a_node1.cid.clone(), dag_a_node1.clone());
         dag_pool.put_node(dag_a_node2.cid.clone(), dag_a_node2.clone());
@@ -220,16 +233,20 @@ mod test {
         dag_a.graph.add_node(dag_a_node3.cid.clone());
 
         // DAG B
-        let dag_b_node1 = Node::new(("add".to_string(), 2), Vec::new());
-        let dag_b_node2 = Node::new(("add".to_string(), 3), Vec::new());
+        let dag_b_node1 = Node::new(("add".to_string(), 2), BTreeSet::new());
+        let dag_b_node2 = Node::new(("add".to_string(), 3), BTreeSet::new());
         let dag_b_node3 = Node::new(
             ("add".to_string(), 1),
-            vec![dag_b_node1.cid.clone(), dag_b_node2.cid.clone()],
+            vec![dag_b_node1.cid.clone(), dag_b_node2.cid.clone()]
+                .into_iter()
+                .collect(),
         );
-        let dag_b_node4 = Node::new(("add".to_string(), 5), Vec::new());
+        let dag_b_node4 = Node::new(("add".to_string(), 5), BTreeSet::new());
         let dag_b_node5 = Node::new(
             ("add".to_string(), 4),
-            vec![dag_b_node3.cid.clone(), dag_b_node4.cid.clone()],
+            vec![dag_b_node3.cid.clone(), dag_b_node4.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         dag_pool.put_node(dag_b_node1.cid.clone(), dag_b_node1.clone());
         dag_pool.put_node(dag_b_node2.cid.clone(), dag_b_node2.clone());
@@ -256,16 +273,20 @@ mod test {
 
         // DAG CとDAG Dに共通するノードがある場合のテスト
         // DAG C
-        let dag_c_node1 = Node::new(("add".to_string(), 4), Vec::new());
-        let dag_c_node2 = Node::new(("add".to_string(), 5), Vec::new());
+        let dag_c_node1 = Node::new(("add".to_string(), 4), BTreeSet::new());
+        let dag_c_node2 = Node::new(("add".to_string(), 5), BTreeSet::new());
         let dag_c_node3 = Node::new(
             ("add".to_string(), 2),
-            vec![dag_c_node1.cid.clone(), dag_c_node2.cid.clone()],
+            vec![dag_c_node1.cid.clone(), dag_c_node2.cid.clone()]
+                .into_iter()
+                .collect(),
         );
-        let dag_c_node4 = Node::new(("add".to_string(), 3), Vec::new());
+        let dag_c_node4 = Node::new(("add".to_string(), 3), BTreeSet::new());
         let dag_c_node5 = Node::new(
             ("add".to_string(), 1),
-            vec![dag_c_node3.cid.clone(), dag_c_node4.cid.clone()],
+            vec![dag_c_node3.cid.clone(), dag_c_node4.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         dag_pool.put_node(dag_c_node1.cid.clone(), dag_c_node1.clone());
         dag_pool.put_node(dag_c_node2.cid.clone(), dag_c_node2.clone());
@@ -275,16 +296,20 @@ mod test {
         dag_c.graph.add_node(dag_c_node5.cid.clone());
 
         // DAG D
-        let dag_d_node1 = Node::new(("add".to_string(), 8), Vec::new());
-        let dag_d_node2 = Node::new(("add".to_string(), 5), Vec::new());
+        let dag_d_node1 = Node::new(("add".to_string(), 8), BTreeSet::new());
+        let dag_d_node2 = Node::new(("add".to_string(), 5), BTreeSet::new());
         let dag_d_node3 = Node::new(
             ("add".to_string(), 7),
-            vec![dag_d_node1.cid.clone(), dag_d_node2.cid.clone()],
+            vec![dag_d_node1.cid.clone(), dag_d_node2.cid.clone()]
+                .into_iter()
+                .collect(),
         );
-        let dag_d_node4 = Node::new(("add".to_string(), 4), Vec::new());
+        let dag_d_node4 = Node::new(("add".to_string(), 4), BTreeSet::new());
         let dag_d_node5 = Node::new(
             ("add".to_string(), 6),
-            vec![dag_d_node3.cid.clone(), dag_d_node4.cid.clone()],
+            vec![dag_d_node3.cid.clone(), dag_d_node4.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         dag_pool.put_node(dag_d_node1.cid.clone(), dag_d_node1.clone());
         dag_pool.put_node(dag_d_node2.cid.clone(), dag_d_node2.clone());
@@ -305,11 +330,13 @@ mod test {
 
         // DAG EとDAG Fに共通するノードがない場合のテスト
         // DAG E
-        let dag_e_node1 = Node::new(("add".to_string(), 1), Vec::new());
-        let dag_e_node2 = Node::new(("add".to_string(), 2), Vec::new());
+        let dag_e_node1 = Node::new(("add".to_string(), 1), BTreeSet::new());
+        let dag_e_node2 = Node::new(("add".to_string(), 2), BTreeSet::new());
         let dag_e_node3 = Node::new(
             ("add".to_string(), 3),
-            vec![dag_e_node1.cid.clone(), dag_e_node2.cid.clone()],
+            vec![dag_e_node1.cid.clone(), dag_e_node2.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         dag_pool.put_node(dag_e_node1.cid.clone(), dag_e_node1.clone());
         dag_pool.put_node(dag_e_node2.cid.clone(), dag_e_node2.clone());
@@ -317,11 +344,13 @@ mod test {
         dag_e.graph.add_node(dag_e_node3.cid.clone());
 
         // DAG F
-        let dag_f_node1 = Node::new(("add".to_string(), 4), Vec::new());
-        let dag_f_node2 = Node::new(("add".to_string(), 5), Vec::new());
+        let dag_f_node1 = Node::new(("add".to_string(), 4), BTreeSet::new());
+        let dag_f_node2 = Node::new(("add".to_string(), 5), BTreeSet::new());
         let dag_f_node3 = Node::new(
             ("add".to_string(), 6),
-            vec![dag_f_node1.cid.clone(), dag_f_node2.cid.clone()],
+            vec![dag_f_node1.cid.clone(), dag_f_node2.cid.clone()]
+                .into_iter()
+                .collect(),
         );
         dag_pool.put_node(dag_f_node1.cid.clone(), dag_f_node1.clone());
         dag_pool.put_node(dag_f_node2.cid.clone(), dag_f_node2.clone());
@@ -340,18 +369,30 @@ mod test {
 
         // 複数のルートを持つ場合のテスト
         // DAG G
-        let dag_g_node1 = Node::new(("add".to_string(), 1), Vec::new());
-        let dag_g_node2 = Node::new(("add".to_string(), 2), vec![dag_g_node1.cid.clone()]);
-        let dag_g_node3 = Node::new(("add".to_string(), 3), vec![dag_g_node1.cid.clone()]);
+        let dag_g_node1 = Node::new(("add".to_string(), 1), BTreeSet::new());
+        let dag_g_node2 = Node::new(
+            ("add".to_string(), 2),
+            vec![dag_g_node1.cid.clone()].into_iter().collect(),
+        );
+        let dag_g_node3 = Node::new(
+            ("add".to_string(), 3),
+            vec![dag_g_node1.cid.clone()].into_iter().collect(),
+        );
         dag_pool.put_node(dag_g_node1.cid.clone(), dag_g_node1.clone());
         dag_pool.put_node(dag_g_node2.cid.clone(), dag_g_node2.clone());
         dag_pool.put_node(dag_g_node3.cid.clone(), dag_g_node3.clone());
         dag_g.graph.add_node(dag_g_node2.cid.clone());
 
         // DAG H
-        let dag_h_node1 = Node::new(("add".to_string(), 4), Vec::new());
-        let dag_h_node2 = Node::new(("add".to_string(), 5), vec![dag_h_node1.cid.clone()]);
-        let dag_h_node3 = Node::new(("add".to_string(), 6), vec![dag_h_node1.cid.clone()]);
+        let dag_h_node1 = Node::new(("add".to_string(), 4), BTreeSet::new());
+        let dag_h_node2 = Node::new(
+            ("add".to_string(), 5),
+            vec![dag_h_node1.cid.clone()].into_iter().collect(),
+        );
+        let dag_h_node3 = Node::new(
+            ("add".to_string(), 6),
+            vec![dag_h_node1.cid.clone()].into_iter().collect(),
+        );
         dag_pool.put_node(dag_h_node1.cid.clone(), dag_h_node1.clone());
         dag_pool.put_node(dag_h_node2.cid.clone(), dag_h_node2.clone());
         dag_pool.put_node(dag_h_node3.cid.clone(), dag_h_node3.clone());

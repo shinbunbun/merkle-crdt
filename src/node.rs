@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use crate::cid::Cid;
 use serde::Serialize;
 
@@ -7,17 +9,17 @@ pub type Payload = (String, i64);
 pub struct Node {
     pub cid: Cid,
     pub payload: Payload,
-    pub child_cids: Vec<Cid>,
+    pub child_cids: BTreeSet<Cid>,
 }
 
 #[derive(Serialize)]
 struct ForHashNode {
     pub payload: Payload,
-    pub child_cids: Vec<Cid>,
+    pub child_cids: BTreeSet<Cid>,
 }
 
 impl Node {
-    pub fn new(payload: Payload, child_cids: Vec<Cid>) -> Node {
+    pub fn new(payload: Payload, child_cids: BTreeSet<Cid>) -> Node {
         let for_hash_node = ForHashNode {
             payload: payload.clone(),
             child_cids: child_cids.clone(),
