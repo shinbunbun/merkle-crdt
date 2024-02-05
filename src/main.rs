@@ -1,10 +1,5 @@
-use std::collections::{HashMap, HashSet};
-
-use cid::Cid;
 use dag_syncer::DagSyncer;
 use merkle_dag::MerkleDag;
-
-use crate::node::Node;
 
 mod cid;
 mod dag_syncer;
@@ -40,15 +35,5 @@ fn main() {
             let set = merkle_dag.search(&dag_pool);
             println!("set: {:?}", set);
         }
-    }
-}
-
-// 子ノードを辿ってsetを作成する関数
-fn search_child(child_cid: &Cid, map: &HashMap<Cid, Node>, set: &mut HashSet<i64>) {
-    let child_node = map.get(child_cid).unwrap();
-    let value = child_node.payload.1;
-    set.insert(value);
-    if let Some(cid) = child_node.child_cids.last() {
-        search_child(cid, map, set)
     }
 }

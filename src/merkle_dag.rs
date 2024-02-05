@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use crate::{cid::Cid, dag_syncer::DagSyncer, graph::Graph, node::Node};
 
@@ -28,7 +28,7 @@ impl MerkleDag {
         result
     }
 
-    pub fn merge<'a>(&'a mut self, merkle_dag: &'a MerkleDag, dag_pool: &DagSyncer) {
+    pub fn merge(&mut self, merkle_dag: &MerkleDag, dag_pool: &DagSyncer) {
         // rootが同じかの確認
         if self.graph.get_nodes() == merkle_dag.graph.get_nodes() {
             // 同じならマージしない
@@ -45,7 +45,7 @@ impl MerkleDag {
             merkle_dag.graph.get_nodes(),
             &mut used,
             &mut merkle_dag_cid_set,
-            &dag_pool,
+            dag_pool,
         );
         let merkle_dag_cid_set_len = merkle_dag_cid_set.len();
         let mut cnt = 0;
@@ -69,7 +69,7 @@ impl MerkleDag {
             self.graph.get_nodes(),
             &mut used,
             &mut self_cid_set,
-            &dag_pool,
+            dag_pool,
         );
         let self_cid_set_len = self_cid_set.len();
         cnt = 0;
@@ -137,7 +137,7 @@ impl MerkleDag {
 
 #[cfg(test)]
 mod test {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashSet;
 
     use crate::{dag_syncer::DagSyncer, node::Node};
 
